@@ -24,14 +24,14 @@
 ## Classes
 | classes | who worked on the actual code |
 |------|------|
-| LinkedQueue<T> |  | 
+| LinkedQueue<T> | Zolo (w/ GenAI) | 
 | LinkedQueue.Node<T> |  | 
-| Party |  | 
-| SizeGroup |  |  
-| Table |  |  
-| Waitlist |  |  
-| Restaurant |  |  
-| RestaurantListener |  |  
+| Party | Zolo (w/ GenAI) | 
+| SizeGroup | Zolo (w/ GenAI) |  
+| Table | Zolo (w/ GenAI) |  
+| Waitlist | Zolo (w/ GenAI) |  
+| Restaurant | Zolo (w/ GenAI) |  
+| RestaurantListener | Zolo |  
 | TableTimeWindow |  |  
 | HostController | Sieon (w/ GenAI) |  
 | TableTimeApp |  |  
