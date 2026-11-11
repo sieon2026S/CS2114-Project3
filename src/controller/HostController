@@ -1,4 +1,7 @@
-package src.controller;
+package controller;
+
+import model.*;
+import view.TableTimeWindow;
 
 public class HostController{
     private final Restaurant restaurant;
