@@ -1,5 +1,8 @@
 package src.controller;
 
 public class TableTimeApp{
-    
+    Restaurant r = new Restaurant();
+    TableTimeWindow w = new TableTimeWindow(r);
+    w.setController(new HostController(r, w));
+    w.setVisible(true);
 }
