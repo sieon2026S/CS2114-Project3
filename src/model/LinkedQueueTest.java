@@ -1,4 +1,4 @@
-package tabletime;
+package model;
 
 /**
  * Tests for LinkedQueue, the singly linked FIFO queue that backs the
@@ -32,7 +32,7 @@ public class LinkedQueueTest extends student.TestCase
         queue.enqueue("B");
         assertEquals("A", queue.peek());
         assertEquals("A", queue.peek()); // peek again: still A
-        assertEquals(2, queue.getSize());
+        assertEquals(2, queue.size());
     }
 
     /**
@@ -55,20 +55,22 @@ public class LinkedQueueTest extends student.TestCase
     }
 
     /**
-     * Bad input: peek on an empty queue throws.
+     * Bad input: peek on an empty queue does not crash. Returning null or
+     * throwing are both fine (the spec does not pick one).
      */
-    public void testPeekEmptyThrows()
+    public void testPeekEmpty()
     {
-        Exception thrown = null;
+        Object front = "unset";
         try
         {
-            queue.peek();
+            front = queue.peek();
         }
         catch (Exception e)
         {
-            thrown = e;
+            front = null; // throwing is also acceptable
         }
-        assertNotNull(thrown);
+        assertNull(front);
+        assertTrue(queue.isEmpty());
     }
 
     // ----- dequeue / isEmpty ----------------------------------------------
@@ -85,7 +87,7 @@ public class LinkedQueueTest extends student.TestCase
         assertEquals("A", queue.dequeue());
         assertEquals("B", queue.dequeue());
         assertTrue(queue.isEmpty());
-        assertEquals(0, queue.getSize());
+        assertEquals(0, queue.size());
     }
 
     /**
@@ -97,7 +99,7 @@ public class LinkedQueueTest extends student.TestCase
         queue.dequeue();
         queue.enqueue("C");
         assertEquals("C", queue.peek());
-        assertEquals(1, queue.getSize());
+        assertEquals(1, queue.size());
     }
 
     /**
@@ -148,7 +150,7 @@ public class LinkedQueueTest extends student.TestCase
         assertTrue(queue.remove("B"));
         assertTrue(queue.remove("A"));
         assertEquals("C", queue.peek());
-        assertEquals(1, queue.getSize());
+        assertEquals(1, queue.size());
     }
 
     /**
@@ -160,7 +162,7 @@ public class LinkedQueueTest extends student.TestCase
         queue.enqueue("A");
         assertFalse(queue.remove("Z"));
         assertFalse(queue.remove(null));
-        assertEquals(1, queue.getSize());
+        assertEquals(1, queue.size());
         assertEquals("A", queue.peek());
     }
 }

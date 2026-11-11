@@ -1,12 +1,25 @@
 package controller;
 
-import model.*;
+import model.Party;
+import model.Restaurant;
+import model.Table;
 import view.TableTimeWindow;
 
-public class HostController{
+/**
+ * Turns the host's clicks and raw text from the view into Restaurant calls,
+ * and turns errors into on-screen messages.
+ *
+ * @author Sieon Lee (package/import fixes by Sathvik Verma)
+ * @version 2026.11.11
+ */
+public class HostController {
     private final Restaurant restaurant;
     private final TableTimeWindow window;
 
+    /**
+     * @param restaurant the model
+     * @param window the view
+     */
     public HostController(Restaurant restaurant, TableTimeWindow window) {
         if (restaurant == null || window == null) {
             throw new IllegalArgumentException(
@@ -16,6 +29,12 @@ public class HostController{
         this.window = window;
     }
 
+    /**
+     * Add button: parses the size and asks the model to add the party.
+     *
+     * @param nameText raw name text
+     * @param sizeText raw size text
+     */
     public void handleAdd(String nameText, String sizeText) {
         int size;
         try {
@@ -25,7 +44,7 @@ public class HostController{
             window.showMessage("Size must be a whole number from 1 to 6.");
             return;
         }
- 
+
         try {
             Party party = restaurant.addParty(clean(nameText), size);
             window.showMessage("Added " + party.getName() + " (party of "
@@ -37,6 +56,11 @@ public class HostController{
         }
     }
 
+    /**
+     * Remove button: removes a party who walked away.
+     *
+     * @param nameText raw name text
+     */
     public void handleRemove(String nameText) {
         String name = clean(nameText);
         try {
@@ -53,6 +77,9 @@ public class HostController{
         }
     }
 
+    /**
+     * Undo button: removes the most recent add.
+     */
     public void handleUndo() {
         Party undone = restaurant.undoLastAdd();
         if (undone == null) {
@@ -63,13 +90,18 @@ public class HostController{
         }
     }
 
+    /**
+     * Table click: seats a party at a free table, or frees a taken one.
+     *
+     * @param tableId the table number
+     */
     public void handleTableClick(int tableId) {
         Table table = findTable(tableId);
         if (table == null) {
             window.showMessage("There is no table " + tableId + ".");
             return;
         }
- 
+
         try {
             if (table.isFree()) {
                 Party seated = restaurant.seatAt(tableId);
@@ -90,7 +122,7 @@ public class HostController{
                     + leaving + " has left.");
             }
         }
-        catch (IllegalArgumentException e) {
+        catch (IllegalArgumentException | IllegalStateException e) {
             window.showMessage(e.getMessage());
         }
     }
@@ -110,5 +142,4 @@ public class HostController{
         }
         return text.trim();
     }
-
 }

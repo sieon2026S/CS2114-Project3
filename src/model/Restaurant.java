@@ -1,0 +1,174 @@
+package model;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * The model facade: holds the waitlist and tables, applies every rule, and
+ * notifies listeners after each real change. Never imports a GUI class.
+ *
+ * @author Sathvik Verma
+ * @version 2026.11.11
+ */
+public class Restaurant {
+    private static final int[] FLOOR = { 2, 2, 2, 2, 4, 4, 4, 6 };
+
+    private final Waitlist waitlist = new Waitlist();
+    private final List<Table> tables = new ArrayList<>();
+    private int nextArrival = 1;
+    private Party lastAdded;
+    private final List<RestaurantListener> listeners = new ArrayList<>();
+
+    /**
+     * Builds the floor: tables 1-4 seat 2, 5-7 seat 4, 8 seats 6.
+     */
+    public Restaurant() {
+        for (int i = 0; i < FLOOR.length; i++) {
+            tables.add(new Table(i + 1, FLOOR[i]));
+        }
+    }
+
+    /**
+     * @param listener told about every change
+     */
+    public void addListener(RestaurantListener listener) {
+        if (listener == null) {
+            throw new IllegalArgumentException("Listener must not be null.");
+        }
+        listeners.add(listener);
+    }
+
+    private void notifyListeners() {
+        for (RestaurantListener l : listeners) {
+            l.modelChanged();
+        }
+    }
+
+    private Table table(int tableId) {
+        if (tableId < 1 || tableId > tables.size()) {
+            throw new IllegalArgumentException("There is no table " + tableId
+                + ".");
+        }
+        return tables.get(tableId - 1);
+    }
+
+    private boolean nameInUse(String name) {
+        if (waitlist.find(name) != null) {
+            return true;
+        }
+        for (Table t : tables) {
+            if (!t.isFree()
+                && t.getSeatedParty().getName().equalsIgnoreCase(name)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Adds a walk-in party to the waitlist.
+     *
+     * @param name party name
+     * @param size party size, 1 to 6
+     * @return the party that was added
+     * @throws IllegalArgumentException on a bad name or size, or a name
+     *             already waiting or seated
+     */
+    public Party addParty(String name, int size) {
+        Party party = new Party(name, size, nextArrival);
+        if (nameInUse(party.getName())) {
+            throw new IllegalArgumentException(party.getName()
+                + " is already on the list. Try adding a last name.");
+        }
+        nextArrival++;
+        waitlist.add(party);
+        lastAdded = party;
+        notifyListeners();
+        return party;
+    }
+
+    /**
+     * Seats the right waiting party at a free table.
+     *
+     * @param tableId table number 1-8
+     * @return who was seated, or null if nobody fits (nothing changes)
+     * @throws IllegalArgumentException if the table does not exist
+     * @throws IllegalStateException if the table is taken
+     */
+    public Party seatAt(int tableId) {
+        Table t = table(tableId);
+        if (!t.isFree()) {
+            throw new IllegalStateException("Table " + tableId
+                + " is already taken.");
+        }
+        Party party = waitlist.nextFor(t.getCapacity());
+        if (party == null) {
+            return null;
+        }
+        t.seat(party);
+        if (party == lastAdded) {
+            lastAdded = null;
+        }
+        notifyListeners();
+        return party;
+    }
+
+    /**
+     * Frees a table. Freeing a free table changes nothing and sends no
+     * notification.
+     *
+     * @param tableId table number 1-8
+     * @return true if someone left
+     */
+    public boolean freeTable(int tableId) {
+        if (table(tableId).clear() == null) {
+            return false;
+        }
+        notifyListeners();
+        return true;
+    }
+
+    /**
+     * Removes a waiting party who walked away.
+     *
+     * @param name party name
+     * @return true if removed, false if nobody by that name is waiting
+     */
+    public boolean removeParty(String name) {
+        Party party = waitlist.find(name);
+        if (party == null) {
+            return false;
+        }
+        waitlist.remove(party);
+        if (party == lastAdded) {
+            lastAdded = null;
+        }
+        notifyListeners();
+        return true;
+    }
+
+    /**
+     * Removes the most recently added party if it is still waiting.
+     *
+     * @return the party removed, or null if there is nothing to undo
+     */
+    public Party undoLastAdd() {
+        if (lastAdded == null || !waitlist.remove(lastAdded)) {
+            return null;
+        }
+        Party undone = lastAdded;
+        lastAdded = null;
+        notifyListeners();
+        return undone;
+    }
+
+    /** @return a copy of the waitlist in arrival order */
+    public List<Party> getWaitingParties() {
+        return waitlist.getWaitingInOrder();
+    }
+
+    /** @return a copy of the 8 tables, numbered in order */
+    public List<Table> getTables() {
+        return new ArrayList<>(tables);
+    }
+}
