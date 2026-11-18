@@ -122,4 +122,74 @@ public class Waitlist {
     public int size() {
         return small.size() + medium.size() + large.size() + xlarge.size();
     }
+    
+    /**
+     * Estimates the wait time for parties in minutes
+     */
+    
+    /**
+     * Estimates the wait time in minutes for a specific waiting party.
+     * Assumes an average table turnover of 15 minutes per seating cycle,
+     * adjusted for the number of tables available for that party's size group.
+     *
+     * @param party the waiting party
+     * @return estimated wait time in minutes, or -1 if party is null or not waiting
+     */
+    public int estimateWaitMinutes(Party party) {
+        if (party == null) {
+            return -1;
+        }
+        LinkedQueue<Party> queue = queueFor(party.getSizeGroup());
+        java.util.List<Party> list = queue.toList();
+        int position = list.indexOf(party);
+        if (position == -1) {
+            return -1;
+        }
+
+        int tablesForGroup = tableCountFor(party.getSizeGroup());
+        int turnMinutes = 15;
+        // Position 0 is next up (1 cycle if tables are currently full)
+        return ((position / tablesForGroup) + 1) * turnMinutes;
+    }
+
+    /**
+     * Estimates the wait time in minutes for a new party of a given size
+     * if they were added to the waitlist right now.
+     *
+     * @param size party size (1 to 8)
+     * @return estimated wait time in minutes
+     */
+    public int estimateWaitForSize(int size) {
+        SizeGroup group = sizeGroupFor(size);
+        int ahead = queueFor(group).size();
+        int tablesForGroup = tableCountFor(group);
+        int turnMinutes = 15;
+        return ((ahead / tablesForGroup) + 1) * turnMinutes;
+    }
+
+    private SizeGroup sizeGroupFor(int size) {
+        if (size <= 2) {
+            return SizeGroup.SMALL;
+        } else if (size <= 4) {
+            return SizeGroup.MEDIUM;
+        } else if (size <= 6) {
+            return SizeGroup.LARGE;
+        } else {
+            return SizeGroup.XLARGE;
+        }
+    }
+
+    private int tableCountFor(SizeGroup group) {
+        switch (group) {
+            case SMALL:
+                return 4; // Tables 1-4
+            case MEDIUM:
+                return 3; // Tables 5-7
+            case LARGE:
+                return 1; // Table 8
+            default:
+                return 1; // Combined 4-tops (tables 5-7)
+        }
+    }
+
 }

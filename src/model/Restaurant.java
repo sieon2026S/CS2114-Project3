@@ -218,4 +218,57 @@ public class Restaurant {
     public List<Table> getTables() {
         return new ArrayList<>(tables);
     }
+    /**
+     * Returns the estimated wait time in minutes for a party currently on the waitlist.
+     * If a matching free table is immediately available, returns 0.
+     *
+     * @param name party name
+     * @return estimated wait time in minutes, or -1 if the party is not waiting
+     */
+    public int getEstimatedWait(String name) {
+        Party party = waitlist.find(name);
+        if (party == null) {
+            return -1;
+        }
+        if (hasImmediateTableFor(party.getSize())) {
+            return 0;
+        }
+        return waitlist.estimateWaitMinutes(party);
+    }
+
+    /**
+     * Returns the estimated wait time in minutes for a prospective party of the given size.
+     *
+     * @param size party size (1 to 8)
+     * @return estimated wait time in minutes
+     * @throws IllegalArgumentException if size is outside 1..8
+     */
+    public int getEstimatedWaitForSize(int size) {
+        if (size < 1 || size > 8) {
+            throw new IllegalArgumentException("Party size must be between 1 and 8.");
+        }
+        if (hasImmediateTableFor(size)) {
+            return 0;
+        }
+        return waitlist.estimateWaitForSize(size);
+    }
+
+    private boolean hasImmediateTableFor(int size) {
+        if (size >= 7) {
+            int freeFourTops = 0;
+            for (Table t : tables) {
+                if (t.getCapacity() == 4 && t.isFree()) {
+                    freeFourTops++;
+                }
+            }
+            return freeFourTops >= 2;
+        }
+        for (Table t : tables) {
+            if (t.isFree() && t.getCapacity() >= size) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 }
