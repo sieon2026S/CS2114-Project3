@@ -156,4 +156,47 @@ public class WaitlistTest extends student.TestCase
         assertEquals("Lee", waitlist.getWaitingInOrder().get(0).getName());
         assertEquals("Di", waitlist.getWaitingInOrder().get(1).getName());
     }
+
+    // ----- wait-time estimates (Zolo) ---------------------------------------
+
+    /**
+     * Normal: the fifth couple in line waits two 15-minute turns (four
+     * 2-tops), and the party of 6 waits one turn (one six-top).
+     */
+    public void testEstimateWaitMinutes()
+    {
+        String[] names = { "Ann", "Bob", "Cal", "Dee", "Eve" };
+        for (int i = 0; i < names.length; i++)
+        {
+            waitlist.add(new Party(names[i], 2, i + 1));
+        }
+        Party garcia = new Party("Garcia", 6, 6);
+        waitlist.add(garcia);
+        assertEquals(15, waitlist.estimateWaitMinutes(new Party("Ann", 2, 1)));
+        assertEquals(30, waitlist.estimateWaitMinutes(new Party("Eve", 2, 5)));
+        assertEquals(15, waitlist.estimateWaitMinutes(garcia));
+    }
+
+
+    /**
+     * Bad input: null or a party who is not waiting returns -1.
+     */
+    public void testEstimateWaitMinutesNotWaiting()
+    {
+        waitlist.add(new Party("Ann", 2, 1));
+        assertEquals(-1, waitlist.estimateWaitMinutes(null));
+        assertEquals(-1, waitlist.estimateWaitMinutes(new Party("Zed", 2, 9)));
+    }
+
+
+    /**
+     * Normal: a new party is quoted by how many of its size group are ahead.
+     */
+    public void testEstimateWaitForSize()
+    {
+        assertEquals(15, waitlist.estimateWaitForSize(2));
+        waitlist.add(new Party("Patel", 8, 1));
+        assertEquals(30, waitlist.estimateWaitForSize(7));
+        assertEquals(15, waitlist.estimateWaitForSize(4));
+    }
 }

@@ -527,4 +527,108 @@ public class RestaurantTest extends student.TestCase
         assertTrue(table(8).isFree());
         assertEquals("Patel", waitingNames());
     }
+
+    // ----- wait-time estimates (Zolo) ---------------------------------------
+
+    /**
+     * Fills every table: four couples, three parties of 4, one party of 6.
+     */
+    private void fillAllTables()
+    {
+        String[] couples = { "Ann", "Ben", "Cat", "Dan" };
+        for (int i = 0; i < couples.length; i++)
+        {
+            restaurant.addParty(couples[i], 2);
+            restaurant.seatAt(i + 1);
+        }
+        String[] fours = { "Eli", "Fox", "Gus" };
+        for (int i = 0; i < fours.length; i++)
+        {
+            restaurant.addParty(fours[i], 4);
+            restaurant.seatAt(i + 5);
+        }
+        restaurant.addParty("Hal", 6);
+        restaurant.seatAt(8);
+    }
+
+
+    /**
+     * Normal: with every table full, couples wait one 15-minute turn while
+     * they fit on the four 2-tops, then a second turn.
+     */
+    public void testGetEstimatedWaitWhenFull()
+    {
+        fillAllTables();
+        String[] waiting = { "Bob", "Cal", "Dee", "Eve", "Fay" };
+        for (String name : waiting)
+        {
+            restaurant.addParty(name, 2);
+        }
+        assertEquals(15, restaurant.getEstimatedWait("Bob"));
+        assertEquals(15, restaurant.getEstimatedWait("eve"));
+        assertEquals(30, restaurant.getEstimatedWait("Fay"));
+    }
+
+
+    /**
+     * Normal: a party that fits a free table right now waits 0 minutes.
+     */
+    public void testGetEstimatedWaitTableFree()
+    {
+        restaurant.addParty("Smith", 2);
+        assertEquals(0, restaurant.getEstimatedWait("Smith"));
+    }
+
+
+    /**
+     * Bad input: a name that is not waiting (or null) returns -1 instead of
+     * throwing.
+     */
+    public void testGetEstimatedWaitNotWaiting()
+    {
+        restaurant.addParty("Smith", 2);
+        assertEquals(-1, restaurant.getEstimatedWait("Nobody"));
+        assertEquals(-1, restaurant.getEstimatedWait(null));
+    }
+
+
+    /**
+     * Normal: a new party of 2 behind four waiting couples (all tables full)
+     * is quoted two turns; an empty restaurant quotes 0.
+     */
+    public void testGetEstimatedWaitForSize()
+    {
+        assertEquals(0, restaurant.getEstimatedWaitForSize(2));
+        fillAllTables();
+        String[] waiting = { "Bob", "Cal", "Dee", "Eve" };
+        for (String name : waiting)
+        {
+            restaurant.addParty(name, 2);
+        }
+        assertEquals(30, restaurant.getEstimatedWaitForSize(2));
+        assertEquals(15, restaurant.getEstimatedWaitForSize(4));
+    }
+
+
+    /**
+     * Bad input: sizes outside 1-8 throw IllegalArgumentException.
+     */
+    public void testGetEstimatedWaitForSizeBadSizes()
+    {
+        int[] badSizes = { 0, -2, 9 };
+        for (int size : badSizes)
+        {
+            Exception thrown = null;
+            try
+            {
+                restaurant.getEstimatedWaitForSize(size);
+            }
+            catch (Exception e)
+            {
+                thrown = e;
+            }
+            assertNotNull(thrown);
+            assertTrue(thrown instanceof IllegalArgumentException);
+        }
+    }
 }

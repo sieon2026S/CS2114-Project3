@@ -12,7 +12,7 @@ The waitlist is backed by **four singly linked `LinkedQueue<Party>` queues**, on
 
 | What | How |
 |---|---|
-| **All tests (no view needed)** | Right-click `src` → Run As → JUnit Test. Runs 7 test classes and **64 tests**: `LinkedQueueTest`, `PartyTest`, `SizeGroupTest`, `TableTest`, `WaitlistTest` and `RestaurantTest` in `model`, plus `HostControllerInputTest` in `controller`. None of them create a window. |
+| **All tests (no view needed)** | Right-click `src` → Run As → JUnit Test. Runs 7 test classes and **72 tests**: `LinkedQueueTest`, `PartyTest`, `SizeGroupTest`, `TableTest`, `WaitlistTest` and `RestaurantTest` in `model`, plus `HostControllerInputTest` in `controller`. None of them create a window. |
 | **The app** | Open `src/controller/TableTimeApp.java` → Run As → Java Application. |
 
 **Using the app**
@@ -68,7 +68,7 @@ Our Deliverable 3 prediction, compared with what we actually touched:
 Nothing rippled where it shouldn't have:
 - `LinkedQueue`, `RestaurantListener` and `TableTimeApp` are untouched. **No class we predicted would stay unchanged had to change.** The only edit near the queue is two *new* interleaving tests added to `LinkedQueueTest` for coverage (see below). The feature didn't require them, and no existing queue test was edited.
 - The model still imports nothing from `view` or `controller`.
-- All 64 tests still run with no window.
+- All 72 tests still run with no window.
 - The observer mechanism needed no changes. Combining or freeing tables sends **one** `modelChanged()`, just like seating does, and that's tested.
 
 ### What changed from our D3 plan?
@@ -79,7 +79,7 @@ Nothing rippled where it shouldn't have:
 | `Waitlist.nextFor(8)` uses the normal fallback | Capacity 8 seats **only** a 7–8 party | So two tables aren't joined for a party that would fit at one (see Surprise 2) |
 | Bad input for combine: "a table taken, the same table twice, not 4-tops" | All of those, plus a table that doesn't exist (`99`, `0`), non-numbers, and "nobody of 7–8 is waiting" | We found these while testing the running app. Each one now shows a message. |
 | New tests listed in D3 | All written. Joined-table and `XLARGE` cases were added to Charlie's `TableTest` and `SizeGroupTest`. | D4 requires a normal and a bad-input test for **every** core model method, including new ones like `Table.joinWith` and `unjoin`. Charlie had already written direct tests for `Table` and `SizeGroup` after D3, so we extended his files instead of starting over. We also moved them from `src/` into `src/model/` to match their `package model;` line. |
-| Wait-time estimates "if time allows" | Not started | Combine Tables took the time. Moved to the final build (see Next Steps). |
+| Wait-time estimates "if time allows" | **Started in the model** by Zolo: `Restaurant.getEstimatedWait(name)`, `getEstimatedWaitForSize(size)`, and `Waitlist.estimateWaitMinutes` / `estimateWaitForSize`. They assume 15 minutes per table turn. **Not shown in the window yet.** | Zolo had time after Combine was done. Showing it in the view, and making it more accurate, moves to the final build (see Next Steps). It's additive: no existing method changed and no test broke, and it has its own normal and bad-input tests. |
 | Controller tested only by hand | Added `HostController.parseWholeNumber(String)` and `HostControllerInputTest` | `"2.5"`, `"four"`, `"99999999999"` and blank Combine boxes never reach the model, so model tests can't cover them. Pulling the parsing into one static method made it testable without creating a window, and both `handleAdd` and `handleCombine` now use it. |
 | Queue tests unchanged | Same, plus two **interleaved** enqueue/dequeue tests | To lock in FIFO order when adds and removes are mixed, which is how a real host uses the line. `WaitlistTest` got a matching interleaved add/seat test. |
 
@@ -87,11 +87,12 @@ Nothing rippled where it shouldn't have:
 
 - **Only two tables can be combined**, and only 4-tops (5, 6, 7), so the largest party is 8. Parties of 9+ are rejected with a message.
 - Table 8 (the six-top) can't join anything. We decided that on purpose to keep the rule simple.
-- **No wait-time estimates** yet.
+- **Wait-time estimates are model-only.** The window doesn't show them yet.
+- **The estimate is rough when bigger tables are free.** If all 2-tops are full but larger tables are open, *every* waiting couple is quoted 0 minutes, even ones who can't all be seated right now. The check asks "is any table free?" instead of counting parties ahead. Found while testing, and listed first in Next Steps.
 - **No no-show timer** (dropped; see below).
 - Nothing is saved between runs.
 - **No automated tests for the view.** The window was checked by hand. The controller's only input rule, parsing text into numbers, has its own test.
-- **Tests:** all 64 pass. None are failing or skipped.
+- **Tests:** all 72 pass. None are failing or skipped.
 
 ### Every bad-input case has a test
 
@@ -122,7 +123,7 @@ Each case below was also run through the live app with no crash.
 
 ### What's left for the final build (in order)
 
-1. **Wait-time estimates.** `Restaurant` records when each table is freed, so the window can show "about N minutes" next to each waiting party.
+1. **Finish wait-time estimates.** The model side is in (Zolo). Next: fix the "0 minutes for everyone" case by counting parties ahead against free tables. Then show "about N min" next to each waiting party, and show the quote for a new party when the host types a size.
 2. **Controller tests.** We already have `HostControllerInputTest`. Next, add a `HostControllerTest` with a fake window so the exact on-screen messages are tested too.
 3. **UI polish.** Disable **Combine** when nobody of 7–8 is waiting, and show each party's position and wait time in the list.
 4. **Final README and demo rehearsal** with the whole team.
@@ -149,7 +150,7 @@ Have `TableTimeApp` and the JUnit view already open so no time is spent launchin
 
 | Time | Step (length) | What we show and say |
 |---|---|---|
-| 0:00–0:20 | **Tests** (20 s) | JUnit tab: **64/64 green**. "The model runs with no view, and every bad input has a test." |
+| 0:00–0:20 | **Tests** (20 s) | JUnit tab: **72/72 green**. "The model runs with no view, and every bad input has a test." |
 | 0:20–1:05 | **Normal path** (45 s) | Add `Smith` 2, `Kim` 4, `Garcia` 6. Click table 1 → Smith, table 5 → Kim, table 8 → Garcia. "Four FIFO queues by size; seating only looks at queue fronts." |
 | 1:05–1:55 | **New feature: Combine** (50 s) | Add `Patel` 8. Click a free 2-top: Patel isn't seated. Type `6` + `7` → **Combine**: both tables turn red and show "joined with". Click table 7: both are freed. |
 | 1:55–2:30 | **Bad input** (35 s) | `@d@m`; size `9`; size `four`; Combine `5` + `5`; Combine `1` + `5`. Each shows a message, with no crash. |
@@ -161,10 +162,10 @@ If we fall behind, skip two of the bad inputs. The Combine step is never cut.
 
 | Item | Owner |
 |---|---|
-| Wait-time estimates in `Restaurant` / `Waitlist` | Zolo |
+| Fix the wait-time "0 for everyone" case in `Restaurant` / `Waitlist` | Zolo |
 | Wait-time display in `TableTimeWindow` | Charlie |
 | `HostControllerTest` with a fake window | Sieon |
-| Tests for wait-time estimates; keep the full suite green | Sathvik |
+| Update wait-time tests for the fix; keep the full suite green | Sathvik |
 | UI polish (disable Combine, list formatting) | Charlie |
 | Final README and demo rehearsal | Everyone; Sathvik merges |
 
@@ -179,8 +180,8 @@ If we fall behind, skip two of the bad inputs. The Combine step is never cut.
 | `RestaurantListener` | Zolo | Wrote. Unchanged in D4. |
 | `SizeGroup` | Sathvik | Wrote in D3; added `XLARGE` in D4 (GenAI-assisted) |
 | `Table` | Sathvik | Wrote in D3; added joining in D4 (GenAI-assisted) |
-| `Waitlist` | Sathvik | Wrote in D3; added the 7–8 queue and the `nextFor(8)` rule in D4 (GenAI-assisted) |
-| `Restaurant` | Sathvik | Wrote in D3; added `seatCombined` and the combined `freeTable` in D4 (GenAI-assisted) |
+| `Waitlist` | Sathvik; Zolo | Sathvik wrote it in D3 and added the 7–8 queue and the `nextFor(8)` rule in D4 (GenAI-assisted). Zolo added `estimateWaitMinutes` and `estimateWaitForSize` in D4. |
+| `Restaurant` | Sathvik; Zolo | Sathvik wrote it in D3 and added `seatCombined` and the combined `freeTable` in D4 (GenAI-assisted). Zolo added `getEstimatedWait` and `getEstimatedWaitForSize` in D4. |
 | `TableTimeWindow` | Sathvik | Wrote in D3; added the Combine row and joined labels in D4 (GenAI-assisted) |
 | `HostController` | Sieon; Sathvik | Sieon wrote it (GenAI-assisted). Sathvik fixed packages in D3, and added `handleCombine` and `parseWholeNumber` in D4 (GenAI-assisted). |
 | `TableTimeApp` | Sieon; Sathvik | Sieon wrote it. Sathvik fixed `main` in D3. Unchanged in D4. |
@@ -188,8 +189,8 @@ If we fall behind, skip two of the bad inputs. The Combine step is never cut.
 | `PartyTest` | Sathvik | Wrote in D3; updated size limits in D4 (GenAI-assisted) |
 | `SizeGroupTest` | Charlie; Sathvik | Charlie wrote it (normal and bad cases for `forSize` and `fitsAt`). Sathvik added the `XLARGE` cases and changed size 7 to 9 in D4 (GenAI-assisted). |
 | `TableTest` | Charlie; Sathvik | Charlie wrote it (constructor, `seat`, `clear`, normal and bad cases). Sathvik added the `joinWith` and `unjoin` tests in D4 (GenAI-assisted). |
-| `WaitlistTest` | Sathvik | Wrote in D3; added 4 Combine tests and 1 interleaved test in D4 (GenAI-assisted) |
-| `RestaurantTest` | Sathvik | Wrote in D3; added 7 Combine tests and 1 duplicate-name test in D4 (GenAI-assisted) |
+| `WaitlistTest` | Sathvik | Wrote in D3. In D4, added 4 Combine tests, 1 interleaved test and 3 wait-time tests (GenAI-assisted). |
+| `RestaurantTest` | Sathvik | Wrote in D3. In D4, added 7 Combine tests, 1 duplicate-name test and 5 wait-time tests (GenAI-assisted). |
 | `HostControllerInputTest` | Sathvik | New in D4 (GenAI-assisted) |
 | `README.md` | Sieon; Sathvik | Sieon set up the template. Sathvik wrote the D3 and D4 versions (GenAI-assisted). |
 
@@ -200,6 +201,7 @@ We used **Claude** for Deliverable 4 as follows:
 - **Tests:** we asked for a normal and a bad-input test for every new or changed model method, interleaved queue tests, and a test for every bad-input case. That's how the parsing moved into `HostController.parseWholeNumber`, so it could be tested. We kept Charlie's own `TableTest` and `SizeGroupTest` and only added the Combine cases to them.
 - **Checking the tests:** we had Claude break the code on purpose (for example, freeing only one half of a combined table) to confirm the tests catch real bugs. They did.
 - **Bad-input run-through:** this is how we caught the stale "1 to 6" message in `HostController`, which we fixed.
+- **Reviewing Zolo's wait-time code:** we asked Claude to run it against the rest of the model. That surfaced the "0 minutes for everyone" case. We added tests for his methods but didn't change his code. The fix is his item in Next Steps.
 - **README:** we asked it to draft this file. We checked the prediction-vs-actual table against the actual code changes, and the test count by running the tests.
 
 The Deliverable 3 reflection and next steps are in this repo's history (commit `7ec3609`).

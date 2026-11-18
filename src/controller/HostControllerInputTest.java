@@ -16,11 +16,10 @@ public class HostControllerInputTest extends student.TestCase
      */
     public void testParseWholeNumber()
     {
-        assertEquals(Integer.valueOf(6), HostController.parseWholeNumber("6"));
-        assertEquals(Integer.valueOf(5),
-            HostController.parseWholeNumber("  5 "));
-        assertEquals(Integer.valueOf(-3),
-            HostController.parseWholeNumber("-3")); // the model rejects it
+        assertEquals(6, HostController.parseWholeNumber("6").intValue());
+        assertEquals(5, HostController.parseWholeNumber("  5 ").intValue());
+        // parses fine here; the model then rejects it as a party size
+        assertEquals(-3, HostController.parseWholeNumber("-3").intValue());
     }
 
     /**
