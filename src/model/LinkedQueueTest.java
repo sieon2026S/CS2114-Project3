@@ -165,4 +165,58 @@ public class LinkedQueueTest extends student.TestCase
         assertEquals(1, queue.size());
         assertEquals("A", queue.peek());
     }
+
+    // ----- interleaved enqueues and dequeues ---------------------------------
+
+    /**
+     * Normal: mixing enqueues and dequeues keeps strict first-in, first-out
+     * order and the right size at every step.
+     */
+    public void testInterleavedEnqueueDequeueKeepsOrder()
+    {
+        queue.enqueue("A");
+        queue.enqueue("B");
+        assertEquals("A", queue.dequeue());
+        queue.enqueue("C");
+        queue.enqueue("D");
+        assertEquals("B", queue.dequeue());
+        assertEquals("C", queue.peek());
+        queue.enqueue("E");
+        assertEquals(3, queue.size());
+        assertEquals("C", queue.dequeue());
+        assertEquals("D", queue.dequeue());
+        queue.enqueue("F");
+        assertEquals("E", queue.dequeue());
+        assertEquals("F", queue.dequeue());
+        assertTrue(queue.isEmpty());
+    }
+
+
+    /**
+     * Bad input: draining the queue in the middle of interleaving, then
+     * dequeuing once too many, throws, and the queue still works afterwards
+     * (the tail was reset).
+     */
+    public void testInterleavedOverDequeueThenReuse()
+    {
+        queue.enqueue("A");
+        assertEquals("A", queue.dequeue());
+        queue.enqueue("B");
+        assertEquals("B", queue.dequeue());
+        Exception thrown = null;
+        try
+        {
+            queue.dequeue();
+        }
+        catch (Exception e)
+        {
+            thrown = e;
+        }
+        assertNotNull(thrown);
+        queue.enqueue("C");
+        queue.enqueue("D");
+        assertEquals("C", queue.dequeue());
+        assertEquals("D", queue.peek());
+        assertEquals(1, queue.size());
+    }
 }

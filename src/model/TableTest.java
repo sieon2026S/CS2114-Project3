@@ -4,8 +4,8 @@ package model;
  * Tests for Table. This test is in the model package because seat() and
  * clear() are package-private: only model classes may change a table.
  *
- * @author Charlie Horgan
- * @version 2026.11.11
+ * @author Charlie Horgan (joined-table tests added by Sathvik Verma)
+ * @version 2026.11.18
  */
 public class TableTest extends student.TestCase
 {
@@ -127,5 +127,57 @@ public class TableTest extends student.TestCase
     {
         assertNull(table.clear());
         assertTrue(table.isFree());
+    }
+
+    // ----- new for Combine Tables -----------------------------------------
+
+    /**
+     * Normal: joining links both tables to each other, and unjoin splits
+     * both sides.
+     */
+    public void testJoinAndUnjoin()
+    {
+        Table five = new Table(5, 4);
+        Table six = new Table(6, 4);
+        assertFalse(five.isJoined());
+        five.joinWith(six);
+        assertTrue(five.isJoined());
+        assertTrue(six.isJoined());
+        assertEquals(six, five.getJoinedWith());
+        assertEquals(five, six.getJoinedWith());
+        six.unjoin();
+        assertFalse(five.isJoined());
+        assertFalse(six.isJoined());
+        assertNull(five.getJoinedWith());
+    }
+
+    /**
+     * Bad input: a table cannot be joined with itself or with null, and
+     * unjoining a table that is not joined changes nothing.
+     */
+    public void testJoinBadInputThrows()
+    {
+        Exception self = null;
+        try
+        {
+            table.joinWith(table);
+        }
+        catch (Exception e)
+        {
+            self = e;
+        }
+        Exception none = null;
+        try
+        {
+            table.joinWith(null);
+        }
+        catch (Exception e)
+        {
+            none = e;
+        }
+        assertTrue(self instanceof IllegalArgumentException);
+        assertTrue(none instanceof IllegalArgumentException);
+        table.unjoin();
+        assertFalse(table.isJoined());
     }
 }

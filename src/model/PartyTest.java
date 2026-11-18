@@ -23,21 +23,23 @@ public class PartyTest extends student.TestCase
     }
 
     /**
-     * Normal: the smallest (1) and largest (6) sizes are allowed.
+     * Normal: the smallest (1) and largest (8, two combined 4-tops) sizes
+     * are allowed.
      */
     public void testSizeLimitsAllowed()
     {
         assertEquals(1, new Party("Lee", 1, 1).getSize());
         assertEquals(6, new Party("Garcia", 6, 2).getSize());
+        assertEquals(8, new Party("Patel", 8, 3).getSize());
     }
 
     /**
-     * Bad input: zero, negative, too large and extreme sizes all throw
+     * Bad input: zero, negative, over 8 and extreme sizes all throw
      * IllegalArgumentException.
      */
     public void testBadSizesThrow()
     {
-        int[] badSizes = { 0, -3, 7, 20, 1000000000 };
+        int[] badSizes = { 0, -3, 9, 20, 1000000000 };
         for (int size : badSizes)
         {
             Exception thrown = null;

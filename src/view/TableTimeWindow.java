@@ -30,7 +30,7 @@ import model.Table;
  * redraws whenever the model calls modelChanged().
  *
  * @author Sathvik Verma
- * @version 2026.11.11
+ * @version 2026.11.18
  */
 public class TableTimeWindow
     extends JFrame
@@ -49,6 +49,9 @@ public class TableTimeWindow
     private final JButton removeButton;
     private final JButton undoButton;
     private final JButton[] tableButtons;
+    private final JTextField combineFirstField;
+    private final JTextField combineSecondField;
+    private final JButton combineButton;
     private final JTextArea waitlistArea;
     private final JLabel messageLabel;
 
@@ -75,14 +78,29 @@ public class TableTimeWindow
         removeButton = new JButton("Remove");
         undoButton = new JButton("Undo");
 
-        JPanel inputPanel = new JPanel();
-        inputPanel.add(new JLabel("Name:"));
-        inputPanel.add(nameField);
-        inputPanel.add(new JLabel("Size:"));
-        inputPanel.add(sizeField);
-        inputPanel.add(addButton);
-        inputPanel.add(removeButton);
-        inputPanel.add(undoButton);
+        JPanel addPanel = new JPanel();
+        addPanel.add(new JLabel("Name:"));
+        addPanel.add(nameField);
+        addPanel.add(new JLabel("Size (1-8):"));
+        addPanel.add(sizeField);
+        addPanel.add(addButton);
+        addPanel.add(removeButton);
+        addPanel.add(undoButton);
+
+        // ----- second row: combine two 4-tops for a party of 7-8 -----
+        combineFirstField = new JTextField(2);
+        combineSecondField = new JTextField(2);
+        combineButton = new JButton("Combine");
+        JPanel combinePanel = new JPanel();
+        combinePanel.add(new JLabel("Party of 7-8? Combine 4-tops:"));
+        combinePanel.add(combineFirstField);
+        combinePanel.add(new JLabel("+"));
+        combinePanel.add(combineSecondField);
+        combinePanel.add(combineButton);
+
+        JPanel inputPanel = new JPanel(new GridLayout(2, 1));
+        inputPanel.add(addPanel);
+        inputPanel.add(combinePanel);
 
         // ----- center: one button per table -----
         JPanel tablePanel = new JPanel(new GridLayout(2, 4, 8, 8));
@@ -181,6 +199,17 @@ public class TableTimeWindow
                 }
             }
         });
+        combineButton.addActionListener(new ActionListener()
+        {
+            public void actionPerformed(ActionEvent e)
+            {
+                if (ready())
+                {
+                    controller.handleCombine(combineFirstField.getText(),
+                        combineSecondField.getText());
+                }
+            }
+        });
         for (int i = 0; i < TABLE_COUNT; i++)
         {
             final int tableNumber = i + 1;
@@ -251,6 +280,11 @@ public class TableTimeWindow
             else
             {
                 label += table.getSeatedParty().getName();
+                if (table.isJoined())
+                {
+                    label += "<br>(joined with " + table.getJoinedWith()
+                        .getNumber() + ")";
+                }
                 button.setBackground(TAKEN);
             }
             button.setText(label + "</center></html>");
@@ -276,6 +310,15 @@ public class TableTimeWindow
     {
         nameField.setText("");
         sizeField.setText("");
+    }
+
+    /**
+     * Empties the two combine fields after tables are joined.
+     */
+    public void clearCombineInputs()
+    {
+        combineFirstField.setText("");
+        combineSecondField.setText("");
     }
 
     /**

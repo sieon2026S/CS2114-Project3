@@ -12,7 +12,9 @@ public enum SizeGroup {
     /** Parties of 3-4. */
     MEDIUM(3, 4),
     /** Parties of 5-6. */
-    LARGE(5, 6);
+    LARGE(5, 6),
+    /** Parties of 7-8: only seated at two combined 4-tops. */
+    XLARGE(7, 8);
 
     private final int minSize;
     private final int maxSize;
@@ -25,7 +27,7 @@ public enum SizeGroup {
     /**
      * @param size a party size
      * @return the group for that size
-     * @throws IllegalArgumentException outside 1 to 6
+     * @throws IllegalArgumentException outside 1 to 8
      */
     public static SizeGroup forSize(int size) {
         for (SizeGroup g : values()) {

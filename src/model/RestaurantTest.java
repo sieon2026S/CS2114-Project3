@@ -125,12 +125,12 @@ public class RestaurantTest extends student.TestCase
     }
 
     /**
-     * Bad input: size 0, -3, 7 and 1000000000 throw, nothing is added, and
+     * Bad input: size 0, -3, 9 and 1000000000 throw, nothing is added, and
      * no notification is sent.
      */
     public void testAddPartyBadSizes()
     {
-        int[] badSizes = { 0, -3, 7, 1000000000 };
+        int[] badSizes = { 0, -3, 9, 1000000000 };
         for (int size : badSizes)
         {
             Exception thrown = tryAdd("Smith", size);
@@ -157,6 +157,20 @@ public class RestaurantTest extends student.TestCase
         assertEquals(0, restaurant.getWaitingParties().size());
         assertEquals(0, listener.getCount());
     }
+
+    /**
+     * Bad input: a duplicate name differing only in case and spaces is also
+     * refused, and so is the name of a party already seated.
+     */
+    public void testAddPartyDuplicateIgnoresCaseAndSeated()
+    {
+        restaurant.addParty("Smith", 2);
+        assertTrue(tryAdd("  smith ", 2) instanceof IllegalArgumentException);
+        restaurant.seatAt(1);
+        assertTrue(tryAdd("SMITH", 2) instanceof IllegalArgumentException);
+        assertEquals(0, restaurant.getWaitingParties().size());
+    }
+
 
     /**
      * Bad input: a duplicate name is refused and the list keeps one Smith.
@@ -366,5 +380,151 @@ public class RestaurantTest extends student.TestCase
         }
         assertEquals("Smith", waitingNames());
         assertEquals(8, restaurant.getTables().size());
+    }
+
+    // ----- seatCombined (Combine Tables feature) ------------------------------
+
+    /**
+     * Calls seatCombined and returns the exception it threw, or null.
+     */
+    private Exception tryCombine(int a, int b)
+    {
+        try
+        {
+            restaurant.seatCombined(a, b);
+        }
+        catch (Exception e)
+        {
+            return e;
+        }
+        return null;
+    }
+
+
+    /**
+     * Normal: a party of 8 is seated at tables 5 + 6, both are taken, they
+     * are joined, and the view is told once.
+     */
+    public void testSeatCombined()
+    {
+        restaurant.addParty("Patel", 8);
+        int before = listener.getCount();
+        Party seated = restaurant.seatCombined(5, 6);
+        assertEquals("Patel", seated.getName());
+        assertEquals("Patel", table(5).getSeatedParty().getName());
+        assertEquals("Patel", table(6).getSeatedParty().getName());
+        assertTrue(table(5).isJoined());
+        assertEquals(6, table(5).getJoinedWith().getNumber());
+        assertEquals(5, table(6).getJoinedWith().getNumber());
+        assertEquals(0, restaurant.getWaitingParties().size());
+        assertEquals(before + 1, listener.getCount());
+    }
+
+
+    /**
+     * Bad input: nobody of 7-8 is waiting, so seatCombined returns null and
+     * the tables stay free and apart.
+     */
+    public void testSeatCombinedNobodyLargeEnough()
+    {
+        restaurant.addParty("Smith", 2);
+        int before = listener.getCount();
+        assertNull(restaurant.seatCombined(5, 6));
+        assertTrue(table(5).isFree());
+        assertFalse(table(5).isJoined());
+        assertEquals("Smith", waitingNames());
+        assertEquals(before, listener.getCount());
+    }
+
+
+    /**
+     * Bad input: the same table twice, a table that does not exist, and a
+     * 2-top or the six-top all throw IllegalArgumentException and change
+     * nothing.
+     */
+    public void testSeatCombinedBadTables()
+    {
+        restaurant.addParty("Patel", 8);
+        int[][] bad = { { 5, 5 }, { 5, 99 }, { 0, 6 }, { 1, 5 }, { 7, 8 } };
+        for (int[] pair : bad)
+        {
+            Exception thrown = tryCombine(pair[0], pair[1]);
+            assertNotNull(pair[0] + "+" + pair[1] + " should be rejected",
+                thrown);
+            assertTrue(thrown instanceof IllegalArgumentException);
+        }
+        assertEquals("Patel", waitingNames());
+        assertTrue(table(5).isFree());
+    }
+
+
+    /**
+     * Bad input: combining with a taken table throws and the party keeps
+     * waiting.
+     */
+    public void testSeatCombinedTakenTable()
+    {
+        restaurant.addParty("Kim", 4);
+        restaurant.seatAt(5);
+        restaurant.addParty("Patel", 8);
+        Exception thrown = tryCombine(5, 6);
+        assertNotNull(thrown);
+        assertTrue(thrown instanceof IllegalStateException);
+        assertEquals("Patel", waitingNames());
+        assertTrue(table(6).isFree());
+    }
+
+
+    /**
+     * Normal: freeing either half of a combined table frees both halves and
+     * splits them apart, with one notification.
+     */
+    public void testFreeCombinedTableFreesBoth()
+    {
+        restaurant.addParty("Patel", 8);
+        restaurant.seatCombined(6, 7);
+        int before = listener.getCount();
+        assertTrue(restaurant.freeTable(7));
+        assertTrue(table(6).isFree());
+        assertTrue(table(7).isFree());
+        assertFalse(table(6).isJoined());
+        assertFalse(table(7).isJoined());
+        assertEquals(before + 1, listener.getCount());
+    }
+
+
+    /**
+     * Bad input: seatAt on one half of a combined table throws because it is
+     * taken.
+     */
+    public void testSeatAtCombinedTableThrows()
+    {
+        restaurant.addParty("Patel", 8);
+        restaurant.seatCombined(5, 6);
+        restaurant.addParty("Kim", 4);
+        Exception thrown = null;
+        try
+        {
+            restaurant.seatAt(6);
+        }
+        catch (Exception e)
+        {
+            thrown = e;
+        }
+        assertNotNull(thrown);
+        assertEquals("Kim", waitingNames());
+    }
+
+
+    /**
+     * Normal: a party of 7-8 is never seated at a regular table, even the
+     * six-top; it waits for a combine.
+     */
+    public void testLargePartyWaitsForCombine()
+    {
+        restaurant.addParty("Patel", 7);
+        assertNull(restaurant.seatAt(8));
+        assertTrue(table(8).isFree());
+        assertEquals("Patel", waitingNames());
     }
 }

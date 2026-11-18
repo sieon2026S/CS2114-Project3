@@ -7,8 +7,8 @@ package model;
  * @version 2026.11.11
  */
 public class Party {
-    /** Largest party the floor can seat (one six-top). */
-    public static final int MAX_SIZE = 6;
+    /** Largest party: two combined 4-tops seat 8. */
+    public static final int MAX_SIZE = 8;
     /** Longest name allowed. */
     public static final int MAX_NAME = 30;
 
@@ -18,10 +18,10 @@ public class Party {
 
     /**
      * @param name the party name (letters, spaces, hyphens, apostrophes)
-     * @param size number of people, 1 to 6
+     * @param size number of people, 1 to 8
      * @param arrivalNumber order of arrival (lower = earlier)
      * @throws IllegalArgumentException on a blank or invalid name or a size
-     *             outside 1 to 6
+     *             outside 1 to 8
      */
     public Party(String name, int size, int arrivalNumber) {
         if (name == null || name.trim().isEmpty()) {
@@ -36,7 +36,7 @@ public class Party {
         }
         if (size <= 0 || size > MAX_SIZE) {
             throw new IllegalArgumentException(
-                "Party size must be a whole number from 1 to 6.");
+                "Party size must be a whole number from 1 to 8.");
         }
         if (arrivalNumber < 0) {
             throw new IllegalArgumentException(

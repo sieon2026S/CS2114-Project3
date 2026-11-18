@@ -8,7 +8,7 @@ import java.util.List;
  * notifies listeners after each real change. Never imports a GUI class.
  *
  * @author Sathvik Verma
- * @version 2026.11.11
+ * @version 2026.11.18
  */
 public class Restaurant {
     private static final int[] FLOOR = { 2, 2, 2, 2, 4, 4, 4, 6 };
@@ -69,7 +69,7 @@ public class Restaurant {
      * Adds a walk-in party to the waitlist.
      *
      * @param name party name
-     * @param size party size, 1 to 6
+     * @param size party size, 1 to 8
      * @return the party that was added
      * @throws IllegalArgumentException on a bad name or size, or a name
      *             already waiting or seated
@@ -114,15 +114,62 @@ public class Restaurant {
     }
 
     /**
-     * Frees a table. Freeing a free table changes nothing and sends no
+     * Pushes two free 4-tops together and seats the longest-waiting party of
+     * 7-8 there. If nobody of 7-8 is waiting, nothing changes.
+     *
+     * @param tableA first table number
+     * @param tableB second table number
+     * @return who was seated, or null if no party of 7-8 is waiting
+     * @throws IllegalArgumentException if a table does not exist, both
+     *             numbers are the same, or either table is not a 4-top
+     * @throws IllegalStateException if either table is taken
+     */
+    public Party seatCombined(int tableA, int tableB) {
+        Table a = table(tableA);
+        Table b = table(tableB);
+        if (a == b) {
+            throw new IllegalArgumentException(
+                "Pick two different tables to combine.");
+        }
+        if (a.getCapacity() != 4 || b.getCapacity() != 4) {
+            throw new IllegalArgumentException(
+                "Only 4-seat tables (5, 6, 7) can be combined.");
+        }
+        if (!a.isFree() || !b.isFree()) {
+            throw new IllegalStateException("Table "
+                + (a.isFree() ? tableB : tableA) + " is already taken.");
+        }
+        Party party = waitlist.nextFor(8);
+        if (party == null) {
+            return null;
+        }
+        a.seat(party);
+        b.seat(party);
+        a.joinWith(b);
+        if (party == lastAdded) {
+            lastAdded = null;
+        }
+        notifyListeners();
+        return party;
+    }
+
+    /**
+     * Frees a table. If it was joined to another table, both are freed and
+     * split apart. Freeing a free table changes nothing and sends no
      * notification.
      *
      * @param tableId table number 1-8
      * @return true if someone left
      */
     public boolean freeTable(int tableId) {
-        if (table(tableId).clear() == null) {
+        Table t = table(tableId);
+        Table partner = t.getJoinedWith();
+        if (t.clear() == null) {
             return false;
+        }
+        if (partner != null) {
+            partner.clear();
+            t.unjoin();
         }
         notifyListeners();
         return true;

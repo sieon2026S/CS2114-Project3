@@ -10,12 +10,13 @@ import java.util.List;
  * of a given size gets. Seating only ever looks at queue fronts.
  *
  * @author Sathvik Verma
- * @version 2026.11.11
+ * @version 2026.11.18
  */
 public class Waitlist {
     private final LinkedQueue<Party> small = new LinkedQueue<>();
     private final LinkedQueue<Party> medium = new LinkedQueue<>();
     private final LinkedQueue<Party> large = new LinkedQueue<>();
+    private final LinkedQueue<Party> xlarge = new LinkedQueue<>();
 
     private LinkedQueue<Party> queueFor(SizeGroup group) {
         switch (group) {
@@ -23,8 +24,10 @@ public class Waitlist {
                 return small;
             case MEDIUM:
                 return medium;
-            default:
+            case LARGE:
                 return large;
+            default:
+                return xlarge;
         }
     }
 
@@ -43,12 +46,17 @@ public class Waitlist {
     /**
      * Removes and returns who a table of this capacity should seat: the
      * front of the matching group first; otherwise the earliest-arriving
-     * front among smaller groups.
+     * front among smaller groups. Capacity 8 means two combined 4-tops,
+     * which only ever seat a party of 7-8 (joining two tables for a smaller
+     * party would waste them).
      *
-     * @param capacity the table's seat count
+     * @param capacity the table's seat count (2, 4, 6, or 8 when combined)
      * @return the party to seat, or null if nobody fits
      */
     public Party nextFor(int capacity) {
+        if (capacity >= 8) {
+            return xlarge.isEmpty() ? null : xlarge.dequeue();
+        }
         SizeGroup match = capacity >= 6 ? SizeGroup.LARGE
             : capacity >= 4 ? SizeGroup.MEDIUM : SizeGroup.SMALL;
         if (!queueFor(match).isEmpty()) {
@@ -101,6 +109,7 @@ public class Waitlist {
         all.addAll(small.toList());
         all.addAll(medium.toList());
         all.addAll(large.toList());
+        all.addAll(xlarge.toList());
         Collections.sort(all, new Comparator<Party>() {
             public int compare(Party a, Party b) {
                 return a.getArrivalNumber() - b.getArrivalNumber();
@@ -111,6 +120,6 @@ public class Waitlist {
 
     /** @return total waiting parties */
     public int size() {
-        return small.size() + medium.size() + large.size();
+        return small.size() + medium.size() + large.size() + xlarge.size();
     }
 }

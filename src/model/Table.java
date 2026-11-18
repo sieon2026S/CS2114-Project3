@@ -5,12 +5,13 @@ package model;
  * Only classes in the model package can seat or clear it.
  *
  * @author Sathvik Verma
- * @version 2026.11.11
+ * @version 2026.11.18
  */
 public class Table {
     private final int number;
     private final int capacity;
     private Party seatedParty;
+    private Table joinedWith;
 
     /**
      * @param number table number (1 or more)
@@ -43,6 +44,41 @@ public class Table {
     /** @return who is sitting here, or null if free */
     public Party getSeatedParty() {
         return seatedParty;
+    }
+
+    /** @return true if this table is pushed together with another one */
+    public boolean isJoined() {
+        return joinedWith != null;
+    }
+
+    /** @return the table this one is joined with, or null */
+    public Table getJoinedWith() {
+        return joinedWith;
+    }
+
+    /**
+     * Pushes this table together with another one (both sides are linked).
+     *
+     * @param other the table to join
+     * @throws IllegalArgumentException if other is null or this table
+     */
+    void joinWith(Table other) {
+        if (other == null || other == this) {
+            throw new IllegalArgumentException(
+                "A table can only be joined with a different table.");
+        }
+        joinedWith = other;
+        other.joinedWith = this;
+    }
+
+    /**
+     * Splits this table from the one it was joined with (both sides).
+     */
+    void unjoin() {
+        if (joinedWith != null) {
+            joinedWith.joinedWith = null;
+            joinedWith = null;
+        }
     }
 
     /**

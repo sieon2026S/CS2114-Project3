@@ -1,18 +1,18 @@
 package model;
 
 /**
- * Tests for SizeGroup. SizeGroup decides which of the three waitlist
+ * Tests for SizeGroup. SizeGroup decides which of the four waitlist
  * queues a party waits in and which tables a group fits at, so a wrong
  * boundary here would send parties to the wrong line.
  *
- * @author Charlie Horgan
- * @version 2026.11.11
+ * @author Charlie Horgan (XLARGE cases added by Sathvik Verma)
+ * @version 2026.11.18
  */
 public class SizeGroupTest extends student.TestCase
 {
 
     /**
-     * Normal: every size from 1 to 6 maps to the right group, including
+     * Normal: every size from 1 to 8 maps to the right group, including
      * both edges of each group.
      */
     public void testForSizeEachGroup()
@@ -23,6 +23,8 @@ public class SizeGroupTest extends student.TestCase
         assertEquals(SizeGroup.MEDIUM, SizeGroup.forSize(4));
         assertEquals(SizeGroup.LARGE, SizeGroup.forSize(5));
         assertEquals(SizeGroup.LARGE, SizeGroup.forSize(6));
+        assertEquals(SizeGroup.XLARGE, SizeGroup.forSize(7));
+        assertEquals(SizeGroup.XLARGE, SizeGroup.forSize(8));
     }
 
     /**
@@ -31,7 +33,7 @@ public class SizeGroupTest extends student.TestCase
      */
     public void testForSizeBadSizesThrow()
     {
-        int[] badSizes = { 0, -1, 7, 1000000000 };
+        int[] badSizes = { 0, -1, 9, 1000000000 };
         for (int size : badSizes)
         {
             Exception thrown = null;
@@ -60,6 +62,7 @@ public class SizeGroupTest extends student.TestCase
         assertTrue(SizeGroup.MEDIUM.fitsAt(4));
         assertTrue(SizeGroup.MEDIUM.fitsAt(6));
         assertTrue(SizeGroup.LARGE.fitsAt(6));
+        assertTrue(SizeGroup.XLARGE.fitsAt(8));
     }
 
     /**
@@ -73,5 +76,6 @@ public class SizeGroupTest extends student.TestCase
         assertFalse(SizeGroup.MEDIUM.fitsAt(2));
         assertFalse(SizeGroup.LARGE.fitsAt(2));
         assertFalse(SizeGroup.LARGE.fitsAt(4));
+        assertFalse(SizeGroup.XLARGE.fitsAt(6));
     }
 }
